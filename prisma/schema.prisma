@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  email       String?
+  phoneNumber String?
+  logoUrl     String?
+  description String?
+  website    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Station {
+  id          String   @id @default(cuid())
+  name        String
+  city        String
+  region      String
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  phoneNumber String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum BusStatus {
+  ACTIVE
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+model Bus {
+  id                 String    @id @default(cuid())
+  registrationNumber String    @unique
+  fleetNumber        String?
+  make               String
+  model              String
+  year               Int?
+  seatCapacity       Int
+  hasAirCondition    Boolean   @default(true)
+  status             BusStatus @default(ACTIVE)
+  companyId          String
+  company            Company   @relation(fields: [companyId], references: [id])
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
