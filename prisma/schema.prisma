@@ -14,24 +14,29 @@ model Company {
   phoneNumber String?
   logoUrl     String?
   description String?
-  website    String?
+  website     String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  buses       Bus[]
+  routes      Route[]
+  staffMembers User[]
 }
 
 model Station {
-  id          String   @id @default(cuid())
-  name        String
-  city        String
-  region      String
-  address     String?
-  latitude    Float?
-  longitude   Float?
-  phoneNumber String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  name              String
+  city              String
+  region            String
+  address           String?
+  latitude          Float?
+  longitude         Float?
+  phoneNumber       String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  originRoutes      Route[]  @relation("OriginStation")
+  destinationRoutes Route[]  @relation("DestinationStation")
 }
 
 enum BusStatus {
@@ -41,17 +46,89 @@ enum BusStatus {
 }
 
 model Bus {
-  id                 String    @id @default(cuid())
-  registrationNumber String    @unique
+  id                 String     @id @default(cuid())
+  registrationNumber String     @unique
   fleetNumber        String?
   make               String
   model              String
   year               Int?
   seatCapacity       Int
-  hasAirCondition    Boolean   @default(true)
-  status             BusStatus @default(ACTIVE)
+  hasAirCondition    Boolean    @default(true)
+  status             BusStatus  @default(ACTIVE)
   companyId          String
-  company            Company   @relation(fields: [companyId], references: [id])
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  company            Company    @relation(fields: [companyId], references: [id])
+  schedules          Schedule[]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 }
+
+model Route {
+  id                       String     @id @default(cuid())
+  companyId                String
+  company                  Company    @relation(fields: [companyId], references: [id])
+  originStationId          String
+  originStation            Station    @relation("OriginStation", fields: [originStationId], references: [id])
+  destinationStationId     String
+  destinationStation       Station    @relation("DestinationStation", fields: [destinationStationId], references: [id])
+  distanceKm               Int?
+  estimatedDurationMinutes Int?
+  isActive                 Boolean    @default(true)
+  createdAt                DateTime   @default(now())
+  updatedAt                DateTime   @updatedAt
+  schedules                Schedule[]
+}
+
+enum ScheduleStatus {
+  SCHEDULED
+  BOARDING
+  DEPARTED
+  ARRIVED
+  CANCELLED
+}
+
+model Schedule {
+  id                   String         @id @default(cuid())
+  routeId              String
+  route                Route          @relation(fields: [routeId], references: [id])
+  busId                String
+  bus                  Bus            @relation(fields: [busId], references: [id])
+  departureDate        DateTime
+  departureTime        DateTime
+  estimatedArrivalTime DateTime
+  fare                 Decimal
+  bookedSeats          Int            @default(0)
+  status               ScheduleStatus @default(SCHEDULED)
+  isBookingOpen        Boolean        @default(true)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+}
+
+enum UserRole {
+  PASSENGER
+  STAFF
+  ADMIN
+}
+
+model User {
+  id              String   @id @default(cuid())
+
+  fullName        String
+  email           String   @unique
+  phoneNumber     String   @unique
+
+  passwordHash    String
+
+  role            UserRole @default(PASSENGER)
+
+  companyId       String?
+  company         Company? @relation(fields: [companyId], references: [id])
+
+  isVerified      Boolean  @default(false)
+  isActive        Boolean  @default(true)
+
+  lastLoginAt     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
